@@ -21,12 +21,13 @@ ACTIONS = [N, S, E, W, 'FIGHT', 'TELEPORT', 'EXIT']
 NUM_ROWS = 12
 NUM_COLS = 14
 
-EXIT_VALUE = 10
-GOLD_VALUE = 10000
+EXIT_VALUE = 50
+GOLD_VALUE = 500
 WALK_VALUE = 0.1
-TELEPORT_VALUE = -10
+TELEPORT_VALUE = -100
 PIT_VALUE = -10000
-WUMPUS_VALUE = -50
+WUMPUS_VALUE = -10000
+FIGHT_VALUE = 0.1
 
 
 def find_initial_position(cave):
@@ -41,7 +42,7 @@ def find_initial_position(cave):
     return start, total_gold
 
 
-def move_agent(state, action, cave, skill_alloc, collected_gold, beaten_wumpus):
+def move_agent(state, action, cave, skill_alloc, collected_gold, beaten_wumpus, total_gold):
     r, c = state
     if action == N:
         next_state = (r - 1, c) if r > 0 and cave[r - 1][c] != 'X' else state
@@ -55,6 +56,8 @@ def move_agent(state, action, cave, skill_alloc, collected_gold, beaten_wumpus):
     # Example: Assign a reward and probability
     if cave[r][c] == 'G' and (r, c) not in collected_gold:
         reward = GOLD_VALUE
+    elif cave[r][c] == "S" and len(collected_gold) == total_gold:
+        reward = EXIT_VALUE
     elif cave[r][c] == 'W' and (r, c) not in beaten_wumpus:
         reward = WUMPUS_VALUE
     elif cave[r][c] == 'P':
@@ -68,10 +71,10 @@ def move_agent(state, action, cave, skill_alloc, collected_gold, beaten_wumpus):
 
 
 def fight_wumpus(state, skill_alloc):
-    reward = 1
+    reward = FIGHT_VALUE
 
-    prob = 1 - (1 / skill_alloc["fighting"])
-
+    #    prob = 1 - (2*(1 / skill_alloc["fighting"]))
+    prob = 0
     return state, prob, reward
 
 
@@ -85,7 +88,7 @@ def find_teleport_targets(state, cave):
     return teleport_targets
 
 
-def initialize_mdp(cave, skill_alloc, collected_gold, beaten_wumpus):
+def initialize_mdp(cave, skill_alloc, collected_gold, beaten_wumpus, total_gold):
     states = []
     transition_probs = {}
     rewards = {}
@@ -105,7 +108,7 @@ def initialize_mdp(cave, skill_alloc, collected_gold, beaten_wumpus):
                     if action in [N, S, E, W]:
                         # Calculate next position based on the action
                         next_state, prob, reward = move_agent(state, action, cave, skill_alloc, collected_gold,
-                                                              beaten_wumpus)
+                                                              beaten_wumpus, total_gold)
                         transition_probs[(state, action)].append((next_state, prob))
                         rewards[(state, action)].append(reward)
 
@@ -119,15 +122,18 @@ def initialize_mdp(cave, skill_alloc, collected_gold, beaten_wumpus):
                         if cave[r][c] == 'T':  # Teleport only if on a teleporter
                             teleport_states = find_teleport_targets(state, cave)
                             for ts in teleport_states:
-
-                                prob = (1-(1/skill_alloc["navigation"])) / len(teleport_states)
+                                prob = (1 - (1 / skill_alloc["navigation"])) / len(teleport_states)
                                 transition_probs[(state, action)].append((ts, prob))
                                 rewards[(state, action)].append(TELEPORT_VALUE)  # Example: -1 reward for risky teleport
 
                     elif action == 'EXIT':
                         if cave[r][c] == 'S':  # Exit only if at the stairs
                             transition_probs[(state, action)].append((None, 1))
-                            rewards[(state, action)].append(EXIT_VALUE)
+                            if len(collected_gold) == total_gold:
+                                print("EXIT IS GOLD", len(collected_gold), total_gold)
+                                rewards[(state, action)].append(GOLD_VALUE)
+                            else:
+                                rewards[(state, action)].append(EXIT_VALUE)
 
     return states, transition_probs, rewards
 
@@ -203,16 +209,13 @@ def agent_function(request_data, request_info):
     print('I got the following request:')
     print(request_data)
 
-    global total_gold
-    total_gold = 0
-
     cave = [list(row) for row in request_data['map'].split('\n')]
     initial_position, total_gold = find_initial_position(cave)
     print_pretty_cave(cave)
 
     if 'skill-points' not in request_data:
         print("in")
-        skill_alloc = {'navigation': 12, 'fighting': 8}
+        skill_alloc = {'navigation': 20, 'fighting': 0}
         return skill_alloc
     print("here")
     try:
@@ -231,7 +234,7 @@ def agent_function(request_data, request_info):
         beaten_wumpus = []
     # Initialize MDP
     states, transition_probs, rewards = initialize_mdp(cave, request_data['skill-points'], collected_gold,
-                                                       beaten_wumpus)
+                                                       beaten_wumpus, total_gold)
     policy, _ = value_iteration(states, transition_probs, rewards, cave, collected_gold, total_gold, beaten_wumpus)
     print("policy", policy)
     # print(request_data)
