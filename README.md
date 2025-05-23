@@ -1,13 +1,11 @@
-# Repository for ss24.2.3/team136
+# Repository for AI Project 2.3
 
-This is the repository for you solution. You can modify this README file any way you see fit.
+**Assignment:** [Monster Quest](https://kwarc.info/teaching/AISysProj/SS24/assignment-2.3.pdf)
 
-**Topic:** WS2324 Assignment 2.3: Wumpus Quest
+# Monster World Agent
 
-# Wumpus World Agent
-
-This repository contains an implementation of a Wumpus World agent that navigates a cave, collects gold, fights
-Wumpuses, and exits safely. The agent uses a Markov Decision Process (MDP) and value iteration to decide on the best
+This repository contains an implementation of a Monster World agent that navigates a cave, collects gold, fights
+Monsters, and exits safely. The agent uses a Markov Decision Process (MDP) and value iteration to decide on the best
 actions to take based on its surroundings and objectives.
 
 ## Dependencies
@@ -65,16 +63,16 @@ on the cave layout and current agent state.
     - `cave`: 2D list representing the cave layout.
     - `skill_alloc`: Dictionary containing skill points allocated for `navigation` and `fighting`.
     - `collected_gold`: List of positions where gold has been collected.
-    - `beaten_wumpus`: List of positions where Wumpuses have been defeated.
+    - `beaten_monster`: List of positions where Monsteres have been defeated.
     - `total_gold`: Total number of gold pieces in the cave.
 - **Returns**:
     - `next_state`: The agent's next state after the action.
     - `prob`: The probability of successfully transitioning to `next_state`.
     - `reward`: The reward for taking the action from the current state.
 
-### - fight_wumpus()
+### - fight_monster()
 
-This function computes the success probability and reward of fighting a Wumpus based on the agent's fighting
+This function computes the success probability and reward of fighting a Monster based on the agent's fighting
 skills.
 
 - **Parameters**:
@@ -83,7 +81,7 @@ skills.
 - **Returns**:
     - `state`: The state remains the same if the fight occurs at the agent's current location.
     - `prob`: Probability of winning the fight.
-    - `reward`: The reward for fighting a Wumpus.
+    - `reward`: The reward for fighting a Monster.
 
 ### - find_teleport_targets()
 
@@ -104,7 +102,7 @@ states, probabilities, and rewards for each state.
     - `cave`: 2D list representing the cave layout.
     - `skill_alloc`: Dictionary containing skill points allocated for `navigation` and `fighting`.
     - `collected_gold`: List of positions where gold has been collected.
-    - `beaten_wumpus`: List of positions where Wumpuses have been defeated.
+    - `beaten_monster`: List of positions where Monsteres have been defeated.
     - `total_gold`: Total number of gold pieces in the cave.
 - **Returns**:
     - `states`: List of all possible states `(row, col)` in the cave.
@@ -123,7 +121,7 @@ The policy is derived from the state-action values.
     - `cave`: 2D list representing the cave layout.
     - `collected_gold`: List of positions where gold has been collected.
     - `total_gold`: Total number of gold pieces in the cave.
-    - `beaten_wumpus`: List of positions where Wumpuses have been defeated.
+    - `beaten_monster`: List of positions where Monsteres have been defeated.
     - `gamma`: Discount factor (default is 0.9).
     - `theta`: Convergence threshold (default is 0.001).
 - **Returns**:
